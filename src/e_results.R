@@ -26,10 +26,12 @@ results_lasso <- read_csv("03_Output/df_coeff_lasso_v2.csv")
 tabla_lasso <- results_lasso %>% 
   arrange(desc(weight)) %>% 
   select(2:4) %>% 
-  slice(1:11) %>% 
+  slice(1:16) %>% 
   rename(Stock = 1,
          Coefficient = 2,
          Weight = 3)
+sum(tabla_lasso$Weight)
+
 
 xtable::xtable(tabla_lasso)
 
@@ -54,15 +56,15 @@ results <- df_test %>%
   mutate(ind = 1:max(length(symbol))) %>% 
   pivot_wider(names_from = "symbol",values_from = "weighted_return") %>% 
   ungroup() %>% 
-  mutate(total_returns = select(., 2:12) %>% rowSums(na.rm = TRUE))
+  mutate(total_returns = select(., 2:17) %>% rowSums(na.rm = TRUE))
 
 # See how the market performed for the same period of time 
 
 
-data_ipc <- read_csv("02_Input/IPC_^MXX.csv")
+data_ipc <- read_csv("02_Input/IPC_MXX.csv")
 # get last 200 trading days 
 data_ipc_200 <- data_ipc %>% 
-  slice(473:673) %>% 
+  tail(n=201) %>% 
   mutate(returns = (Close-lag(Close))/lag(Close)*100) %>% 
   drop_na() %>% 
   mutate(cum_returns=cumsum(returns)) %>% 
@@ -71,7 +73,7 @@ data_ipc_200 <- data_ipc %>%
   mutate(ind=1:200)
 
 final_results <- left_join(data_ipc_200,results, by = "ind") %>% 
-  dplyr::select(1,2,15) %>% 
+  dplyr::select(1,2,20) %>% 
   rename(`Trading Strategy`=total_returns) %>% 
   pivot_longer(cols = 2:3,names_to = "strategy",values_to = "returns")
 

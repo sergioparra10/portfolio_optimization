@@ -44,12 +44,9 @@ data_bmv <- data_bmv %>%
   mutate(log_rt_close = c(NA,diff(log(close), lag=1)))
 
 save(data_bmv,file = "03_Output/data_bmv.rda")
-
 load(file= "03_Output/data_bmv.rda")
 write_csv(data_bmv,"03_Output/FinalDataSet.csv")
 df <- read_csv("03_Output/FinalDataSet.csv")
-
-
 
 
 

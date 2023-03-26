@@ -46,7 +46,7 @@ max_sr <- df_sharpe %>%
 # Plot training epochs vs sharpe ratio evolution 
 
 plot_sr <- df_sharpe %>% 
-  dplyr::filter(symbol == max_sr$symbol[2]) %>% 
+  dplyr::filter(symbol == max_sr$symbol[1]) %>% 
   mutate(epochs = 1:2000,
          col="col")
 
@@ -74,7 +74,7 @@ ggplot(plot_sr, aes(x = epochs, y = sharpe,group=col,color=col)) +
         plot.title = element_text(hjust = .5, face ="bold",size = 15),
         plot.subtitle = element_text(hjust = .5,size = 13),
         plot.caption = element_text(size=11))
-#ggsave(filename = paste0("03_Output/Plots/ResultsSharpeRatio.png"),width=8,height=5)
+ggsave(filename = paste0("03_Output/Plots/ResultsSharpeRatio.png"),width=8,height=5)
 
 
 ### Sharpe Ratios distribution
@@ -110,7 +110,7 @@ ggplot(max_sr, aes(x = maximo)) +
         plot.subtitle = element_text(hjust = .5,size = 13),
         plot.caption = element_text(size=11))
 
-#ggsave(filename = paste0("03_Output/Plots/DistributionSharpeRatio.png"),width=8,height=5)
+ggsave(filename = paste0("03_Output/Plots/DistributionSharpeRatio.png"),width=8,height=5)
 
 
 # Summary statistics, sharpe ratio 
@@ -118,7 +118,7 @@ ggplot(max_sr, aes(x = maximo)) +
 summary_stats_sr <- summary(max_sr$maximo)
 
 aux <- data_bmv %>% 
-  filter(symbol == "AEROMEX.MX")
+  filter(symbol == "GFINBURO.MX")
 
 ### Model performance: training and testing data frames 
 
@@ -145,7 +145,7 @@ max_returns_test <- df_test %>%
 plot_mod_train <- df_train %>% 
   filter(symbol == max_returns_test$symbol[1]) %>% 
   dplyr::select(symbol,5,6) %>% 
-  mutate(trading_day = 1:472) %>% 
+  mutate(trading_day = 1:807) %>% 
   pivot_longer(cols = 2:3,names_to = "strategy",values_to = "cum_returns")
 plot_mod_train$strategy[plot_mod_train$strategy=="cum_ret_hold"] <- "Buy and Hold"
 plot_mod_train$strategy[plot_mod_train$strategy=="cum_ret_model"] <- "Reinforcement Learning Model"
@@ -176,7 +176,7 @@ ggplot(plot_mod_train, aes(x = trading_day, y = cum_returns,group=strategy,color
         plot.title = element_text(hjust = .5, face ="bold",size = 15),
         plot.subtitle = element_text(hjust = .5,size = 13),
         plot.caption = element_text(size=11))
-#ggsave(filename = paste0("03_Output/Plots/ResultsTrainModel.png"),width=8,height=5)
+ggsave(filename = paste0("03_Output/Plots/ResultsTrainModel.png"),width=8,height=5)
 
 
 
@@ -214,7 +214,7 @@ ggplot(plot_mod_test, aes(x = trading_day, y = cum_returns,group=strategy,color=
         plot.title = element_text(hjust = .5, face ="bold",size = 15),
         plot.subtitle = element_text(hjust = .5,size = 13),
         plot.caption = element_text(size=11))
-#ggsave(filename = paste0("03_Output/Plots/ResultsTestModel.png"),width=8,height=5)
+ggsave(filename = paste0("03_Output/Plots/ResultsTestModel.png"),width=8,height=5)
 
 # Summary statistics of cumulative returns 
 
@@ -229,16 +229,20 @@ returns_test <- df_test %>%
 
 returns_test$strategy[returns_test$strategy=="cum_ret_hold"] <- "Buy and Hold"
 returns_test$strategy[returns_test$strategy=="cum_ret_model"] <- "Reinforcement Learning Model"
+media_vline <- returns_test %>% 
+  group_by(strategy) %>% 
+  summarise(media=mean(cum_returns)) 
+  
 
 ggplot(returns_test, aes(x=cum_returns, fill=strategy)) + 
   geom_histogram(alpha=0.5, position="identity")+
+  #geom_vline(data = media_vline,aes(xintercept = media,colour = strategy), linetype = "dashed") +
   ggtitle("Cummulative Returns in Test Data") +
   labs(x = "Cumulative Returns", y = "Number of stocks") +
-  xlim(-50,75)+
   scale_fill_brewer(palette="Set1") +
   scale_color_brewer(palette="Set1") +
-  #scale_y_continuous(labels = scales::percent)+
-  #scale_x_continuous(labels = comma)+
+  scale_x_continuous(labels = function(x) paste0(x,"%"),
+                     limits = c(-50,75))+
   theme_bw() +
   theme(text =element_text(family="sans"),
         legend.title = element_blank(),
@@ -253,22 +257,18 @@ ggplot(returns_test, aes(x=cum_returns, fill=strategy)) +
         plot.title = element_text(hjust = .5, face ="bold",size = 15),
         plot.subtitle = element_text(hjust = .5,size = 13),
         plot.caption = element_text(size=11))
-#ggsave(filename = paste0("03_Output/Plots/ResultsTestDist.png"),width=8,height=5)
+ggsave(filename = paste0("03_Output/Plots/ResultsTestDist.png"),width=8,height=5)
 
 ### Prepare data for lasso modeling 
-
-data_lasso_example <- read_csv("03_Output/df_stocks_portfolio_weights.csv")
-
-### ON HOLD 
 # Filter those stocks that we are going to select 
 
 data_lasso <- data_bmv %>% 
   drop_na(log_rt_close) %>% 
   dplyr::select(date,symbol,log_rt_close) %>% 
   mutate(log_rt_close=as.numeric(log_rt_close)) %>% 
-  pivot_wider(names_from = "symbol",values_from = "log_rt_close") %>% 
+  pivot_wider(names_from = "symbol",values_from = "log_rt_close",values_fill =0) %>% 
   drop_na()
-#write_csv(data_lasso,"03_Output/data_lasso_final.csv")
+write_csv(data_lasso,"03_Output/data_lasso_final.csv")
 
 ### Summary Statistics: Stock returns 
 

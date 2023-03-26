@@ -28,10 +28,10 @@ df_model = pd.read_csv("03_Output/data_lasso_final.csv").set_index('date')
 # Use the model only in test data 
 
 ### previous
-N = 1000
-P = 200
-#N = 354
-#P = 89
+# N = 1000
+# P = 200
+N = 354
+P = 89
 df_model_train = df_model[-(N+P):-P]
 df_model_test = df_model[-P:]
 
@@ -65,5 +65,9 @@ df_coeff[df_coeff["weight"]>1].head(5) ### Stocks where portfolio weights are mo
 
 
 df_coeff.to_csv("03_Output/df_coeff_lasso_v2.csv", encoding='utf-8', index=True)
+
+
+
+
 
 

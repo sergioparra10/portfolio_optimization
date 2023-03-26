@@ -24,6 +24,18 @@ import numpy as np
 df_model = pd.read_csv("03_Output/data_lasso_final.csv").set_index('date')
 
 
+# Filter train and test data
+# Use the model only in test data 
+
+### previous
+# N = 1000
+# P = 200
+N = 354
+P = 89
+x_train = x[-(N+P):-P]
+x_test = x[-P:]
+
+
 from sklearn.linear_model import LinearRegression
 df_model["label"] = 1 
 reg = LinearRegression(fit_intercept=False).fit(df_model.drop(["label"],axis=1), df_model["label"])
