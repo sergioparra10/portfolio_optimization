@@ -101,7 +101,7 @@ df_train_hold = pd.DataFrame(columns=['hold_returns', 'symbol'])
 df_test_returns = pd.DataFrame(columns=['test_returns', 'symbol'])
 df_test_hold = pd.DataFrame(columns=['hold_returns', 'symbol'])
 df_sharpes = pd.DataFrame(columns=['sharpe', 'symbol'])
-
+df_thetas = pd.DataFrame(columns=['theta', 'symbol'])
 
 all_stocks = stocks_bmv.drop_duplicates(subset = ["symbol"])
 all_stocks = all_stocks.symbol.tolist()
@@ -134,7 +134,7 @@ for i in all_stocks:
     x_test = (x_test - mean) / std
     
     np.random.seed(0)
-    theta, sharpes = train(x_train, epochs=2000, M=8, commission=0.0025, learning_rate=0.3)
+    theta, sharpes = train(x_train, epochs=1000, M=8, commission=0.0025, learning_rate=0.3)
     
     train_returns = returns(positions(x_train, theta), x_train, 0.0025)
     test_returns = returns(positions(x_test, theta), x_test, 0.0025)
@@ -150,24 +150,29 @@ for i in all_stocks:
         'symbol': symbol}
     data_sharpes = {'sharpe': sharpes,
         'symbol': symbol}
+    data_thetas = {'theta': theta,
+     'symbol': symbol}
     
     df_train_returns_aux = pd.DataFrame(data_train_returns)
     df_train_hold_aux = pd.DataFrame(data_train_hold)
     df_test_returns_aux = pd.DataFrame(data_test_returns)
     df_test_hold_aux = pd.DataFrame(data_test_hold)
     df_sharpes_aux = pd.DataFrame(data_sharpes)
+    df_thetas_aux = pd.DataFrame(data_thetas)
     
     df_train_returns = df_train_returns.append(df_train_returns_aux, ignore_index=True)
     df_train_hold = df_train_hold.append(df_train_hold_aux, ignore_index=True)
     df_test_returns = df_test_returns.append(df_test_returns_aux, ignore_index=True)
     df_test_hold = df_test_hold.append(df_test_hold_aux, ignore_index=True)
     df_sharpes = df_sharpes.append(df_sharpes_aux, ignore_index=True)
+    df_thetas = df_thetas.append(df_thetas_aux, ignore_index=True)
     
 df_train_returns.to_csv("03_Output/df_train_returns.csv", encoding='utf-8', index=True)
 df_train_hold.to_csv("03_Output/df_train_hold.csv", encoding='utf-8', index=True)
 df_test_returns.to_csv("03_Output/df_test_returns.csv", encoding='utf-8', index=True)
 df_test_hold.to_csv("03_Output/df_test_hold.csv", encoding='utf-8', index=True)
 df_sharpes.to_csv("03_Output/df_sharpes.csv", encoding='utf-8', index=True)
+df_thetas.to_csv("03_Output/df_thetas.csv", encoding='utf-8', index=True)
 
 #  we can graph the resulting Sharpe ratio over each epoch, 
 # and hopefully see it converge to a maximum.

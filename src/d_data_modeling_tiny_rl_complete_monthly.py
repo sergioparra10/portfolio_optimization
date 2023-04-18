@@ -1,5 +1,5 @@
 ### Portfolio Optimization
-### Data modeling Tiny RL (Monthly basis)
+### Data modeling Tiny RL (Monthly basis with more data added each month)
 ### Sergio Parra 
 ### sparrap@itam.mx
 
@@ -13,6 +13,7 @@
 path="/Users/sergioparra/Documents/ITAM/Tesis/"
 import os
 os.chdir(path)
+
 
 # Here we estimate a sharpe ratio from the return time series 
 def sharpe_ratio(rets):
@@ -108,12 +109,12 @@ import pandas as pd
 stocks_bmv = pd.read_csv("03_Output/FinalDataSet.csv").set_index('date')
 
 # Create empty data bases to store results
-df_train_returns = pd.DataFrame(columns=['train_returns', 'symbol','train_month','test_month'])
-df_train_hold = pd.DataFrame(columns=['hold_returns', 'symbol','train_month','test_month'])
-df_test_returns = pd.DataFrame(columns=['test_returns', 'symbol','train_month','test_month'])
-df_test_hold = pd.DataFrame(columns=['hold_returns', 'symbol','train_month','test_month'])
-df_sharpes = pd.DataFrame(columns=['sharpe', 'symbol','train_month','test_month'])
-df_thetas = pd.DataFrame(columns=['theta', 'symbol','train_month','test_month'])
+df_train_returns = pd.DataFrame(columns=['train_returns', 'symbol','start_month','end_month','test_month'])
+df_train_hold = pd.DataFrame(columns=['hold_returns', 'symbol','start_month','end_month','test_month'])
+df_test_returns = pd.DataFrame(columns=['test_returns', 'symbol','start_month','end_month','test_month'])
+df_test_hold = pd.DataFrame(columns=['hold_returns', 'symbol','start_month','end_month','test_month'])
+df_sharpes = pd.DataFrame(columns=['sharpe', 'symbol','start_month','end_month','test_month'])
+df_thetas = pd.DataFrame(columns=['theta', 'symbol','start_month','end_month','test_month'])
 
 ### Keep only a month and test it in the next month
 
@@ -130,10 +131,7 @@ del all_stocks[81]
 # Delere SRE stock, float division by zero in gradient
 
 
-#aux_stocks = all_stocks[1:3]
-#aux_stocks_bmv = stocks_bmv
-
-# Keep only one month and the next one in the data frame 
+# Keep the historical time series and test the strategy in the immediate next month. 
 # convert date column to datetime format
 stocks_bmv['date'] = pd.to_datetime(stocks_bmv.index)
 #aux_stocks_bmv = aux_stocks_bmv.loc[aux_stocks_bmv['date'] <= '2019-02-28']
@@ -142,6 +140,9 @@ stocks_bmv['month'] = stocks_bmv['date'].dt.strftime('%Y-%m')
 months = stocks_bmv['date'].dt.strftime('%Y-%m').unique()# get unique months as YYYY-MM strings
 # drop NaN values
 months = months[:-1]
+
+#aux_stocks = all_stocks[1:3]
+#aux_stocks_bmv = stocks_bmv
 
 
 for i in all_stocks:
@@ -153,19 +154,21 @@ for i in all_stocks:
     df_stock["rets"] = df_stock['close'].diff()[1:]
     
     for i in range(len(months) - 2):
-        
        current_month = months[i]
        next_month = months[i+1]
        next_two_month = months[i+2]
-       
-       x_train = df_stock.loc[df_stock['month'] == current_month].rets
+
+       x_train = df_stock.loc[df_stock['month'] <= current_month].rets
        #x_test = df_stock.loc[df_stock['month'] == next_month].rets
        x_test = df_stock.loc[df_stock['month'].isin([next_month, next_two_month])].rets
        
-    
+       # get minimum date from index
+       min_date = x_train.index.min()
+       # format as 'YYYY-MM'
+       min_month = min_date.strftime('%Y-%m')
+       
        x_train = np.array(x_train)
        x_test = np.array(x_test)
-    
        x_train=x_train[~np.isnan(x_train)]
        x_test=x_test[~np.isnan(x_test)]
     
@@ -176,7 +179,7 @@ for i in all_stocks:
        x_test = (x_test - mean) / std
     
        np.random.seed(123)
-       theta, sharpes = train(x_train, epochs=800, M=8, commission=0.0025, learning_rate=0.3)
+       theta, sharpes = train(x_train, epochs=500, M=8, commission=0.0025, learning_rate=0.3)
     
        train_returns = returns(positions(x_train, theta), x_train, 0.0025)
        test_returns = returns(positions(x_test, theta), x_test, 0.0025)
@@ -184,27 +187,33 @@ for i in all_stocks:
     # initialize data of lists.
        data_train_returns = {'train_returns': train_returns,
         'symbol': symbol,
-        'train_month': current_month,
+        'start_month': min_month,
+        'end_month': current_month,
         'test_month':next_month}
        data_train_hold = {'hold_returns': x_train,
         'symbol': symbol,
-        'train_month': current_month,
+        'start_month': min_month,
+        'end_month': current_month,
         'test_month':next_month}
        data_test_returns = {'test_returns': test_returns,
         'symbol': symbol,
-        'train_month': current_month,
+        'start_month': min_month,
+        'end_month': current_month,
         'test_month':next_month}
        data_test_hold = {'hold_returns': x_test,
         'symbol': symbol,
-        'train_month': current_month,
+        'start_month': min_month,
+        'end_month': current_month,
         'test_month':next_month}
        data_sharpes = {'sharpe': sharpes,
         'symbol': symbol,
-        'train_month': current_month,
+        'start_month': min_month,
+        'end_month': current_month,
         'test_month':next_month}
        data_thetas = {'theta': theta,
         'symbol': symbol,
-        'train_month': current_month,
+        'start_month': min_month,
+        'end_month': current_month,
         'test_month':next_month}
     
        df_train_returns_aux = pd.DataFrame(data_train_returns)
@@ -223,12 +232,12 @@ for i in all_stocks:
     
     
     
-df_train_returns.to_csv("03_Output/df_train_returns_monthly.csv", encoding='utf-8', index=True)
-df_train_hold.to_csv("03_Output/df_train_hold_monthly.csv", encoding='utf-8', index=True)
-df_test_returns.to_csv("03_Output/df_test_returns_monthly.csv", encoding='utf-8', index=True)
-df_test_hold.to_csv("03_Output/df_test_hold_monthly.csv", encoding='utf-8', index=True)
-df_sharpes.to_csv("03_Output/df_sharpes_monthly.csv", encoding='utf-8', index=True)
-df_thetas.to_csv("03_Output/df_thetas_monthly.csv", encoding='utf-8', index=True)
+df_train_returns.to_csv("03_Output/df_train_returns_complete_monthly.csv", encoding='utf-8', index=True)
+df_train_hold.to_csv("03_Output/df_train_hold_complete_monthly.csv", encoding='utf-8', index=True)
+df_test_returns.to_csv("03_Output/df_test_returns_complete_monthly.csv", encoding='utf-8', index=True)
+df_test_hold.to_csv("03_Output/df_test_hold_complete_monthly.csv", encoding='utf-8', index=True)
+df_sharpes.to_csv("03_Output/df_sharpes_complete_monthly.csv", encoding='utf-8', index=True)
+df_thetas.to_csv("03_Output/df_thetas_complete_monthly.csv", encoding='utf-8', index=True)
 
 
 #  we can graph the resulting Sharpe ratio over each epoch, 
@@ -255,6 +264,7 @@ df_thetas.to_csv("03_Output/df_thetas_monthly.csv", encoding='utf-8', index=True
 #plt.ylabel('Cumulative Returns');
 #plt.legend()
 #plt.title("RL Model vs. Buy and Hold - Test Data");
+
 
 
 

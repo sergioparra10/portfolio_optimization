@@ -49,4 +49,14 @@ write_csv(data_bmv,"03_Output/FinalDataSet.csv")
 df <- read_csv("03_Output/FinalDataSet.csv")
 
 
+### Create monthly data frame 
+
+# Keep only a month and test it in the next month
+# Create unique id fopr each month: YYYY-MM
+# First short-term strategy: filter in one month and testing in the next month 
+# Second short-term strategy: use all historical data and test in the next month 
+
+
+
+
 
