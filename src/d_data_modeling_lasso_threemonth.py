@@ -1,5 +1,5 @@
 ### Portfolio Optimization
-### Data modeling Lasso
+### Data modeling Lasso, three month training
 ### Sergio Parra 
 ### sparrap@itam.mx
 
@@ -40,20 +40,20 @@ df_model['month'] = df_model['date'].dt.strftime('%Y-%m')
 months = df_model['date'].dt.strftime('%Y-%m').unique()# get unique months as YYYY-MM strings
 # drop NaN values
 #months = months[:-1]
+months = months[2:48]
 
 
-
-for n in range(len(months)-1):
+for n in range(len(months)-2):
     
+    previous_two_month = months[n-2]
+    previous_month = months[-1]
     current_month = months[n]
-    next_month = months[n+1]
     
-    df_reg = df_model.loc[df_model['month'] == current_month].copy()
-    weight_date = df_model.loc[df_model['month'].isin([next_month])].copy()
+    df_reg = df_model.loc[df_model['month'].isin([previous_two_month,previous_month,current_month])].copy()
     
     remove_variables = ['date','month']
     df_reg=df_reg.drop(remove_variables, axis=1) # axis 1 means remove colums, axis 0 means remove rows
-    weight_date=weight_date.drop(remove_variables, axis=1)
+    #weight_date=weight_date.drop(remove_variables, axis=1)
 
     df_reg["label"] = 1 
     if reg_type == "Lasso":
@@ -84,7 +84,7 @@ for n in range(len(months)-1):
 df_all.head()
 
 
-df_all.to_csv("03_Output/df_coeff_lasso_monthly.csv", encoding='utf-8', index=True)
+df_all.to_csv("03_Output/df_coeff_lasso_threemonth.csv", encoding='utf-8', index=True)
 
 
 
